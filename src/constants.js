@@ -1,0 +1,1 @@
+export const DB_NAME = 'Smart-Attendance-Management-System'
