@@ -19,4 +19,13 @@ app.use((req, res, next) => {
     console.log(`request body: ${req.body}`);
     next()
 })
+
+
+//import routes
+import userRouter from "./routes/user.routes.js"
+import classRouter from "./routes/class.routes.js"
+
+app.use("/api/v1/user", userRouter)
+app.use("/api/v1/class", classRouter)
+
 export {app}
