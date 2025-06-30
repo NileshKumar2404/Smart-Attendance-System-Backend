@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js"
-import { createSession, getSessionById, getSessionForClass } from "../controllers/session.controller";
+import { createSession, getSessionById, getSessionForClass } from "../controllers/session.controller.js";
 
 const router = Router()
 
