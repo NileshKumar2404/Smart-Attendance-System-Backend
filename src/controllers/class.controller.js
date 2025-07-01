@@ -7,16 +7,20 @@ import mongoose from "mongoose"
 
 const createClass = asyncHandler(async (req, res) => {
     try {
-        const {subject, name} = req.body
+        const {subject, name, latitude, longitude} = req.body
     
-        if(!subject || !name) throw new ApiError(401, "All fields are required");
+        if(!subject || !name || !longitude || !latitude) throw new ApiError(401, "All fields are required");
     
         if(req.user.role !== "Teacher") throw new ApiError(401, "You are not authorized to do this.");
     
         const newClass = await Class.create({
             name,
             subject,
-            createdBy: req.user._id
+            createdBy: req.user._id,
+            location: {
+                type: "Point",
+                coordinates: [latitude, longitude]
+            }
         })
     
         if(!newClass) throw new ApiError(401, "Unable to create class");

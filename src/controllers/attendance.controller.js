@@ -5,20 +5,14 @@ import { Attendance } from "../models/attendance.model.js"
 import {Session} from "../models/session.model.js"
 import { Class } from "../models/class.model.js"
 import mongoose from "mongoose"
+import haversine from "haversine-distance"
 
 const MarkAttendance = asyncHandler(async (req, res) => {
-    //Students mark the attendance using qrCode - it sends studentId, sessionId
-    //check the session is exists or not
-    //assign date
-    //check the expires time of the qr code using date
-    //check if the student is belongs from that class or not
-    //check if the student is already marked their attendance or not, otherwise mark the student attendance
-    //create the attendance in db
-    //return res
-
     try {
-        const {sessionId} = req.body
+        const {sessionId, latitude, longitude} = req.body
         const studentId = req.user._id
+
+        if(!latitude || !longitude) throw new ApiError(400, "Location required");
     
         const session = await Session.findById(sessionId)
         if(!session) throw new ApiError(401, "Session not found");
@@ -31,6 +25,18 @@ const MarkAttendance = asyncHandler(async (req, res) => {
 
         const alreadyMarked = await Attendance.findOne({sessionId, studentId})
         if(alreadyMarked) throw new ApiError(401, "The attendance of the student for that session is already marked");
+
+        const classLocation = {
+            latitude: classData.location.coordinates[1],
+            longitude: classData.location.coordinates[0]
+        }
+        const studentLocation = {
+            latitude: parseFloat(latitude), 
+            longitude: parseFloat(longitude)
+        }
+
+        const distance = haversine(classLocation, studentLocation) //in meters
+        if(distance > 100) throw new ApiError(403, "You are too far from the classroom");
 
         const attendance = await Attendance.create({
             sessionId,
