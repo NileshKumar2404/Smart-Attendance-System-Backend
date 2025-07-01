@@ -133,8 +133,10 @@ const addStudentToClass = asyncHandler(async (req, res) => {
 try {
         const {studentEmail} = req.body
         const {classId} = req.params
+
+        // if(req.user.role !== "Teacher") throw new ApiError(401, "You are not authorize to do this.");
     
-        const student = await User.findOne(studentEmail)
+        const student = await User.findOne({email: studentEmail})
         if(!student) throw new ApiError(401, "Student not found");
     
         const classes = await Class.findById(classId);

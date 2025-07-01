@@ -122,7 +122,7 @@ const getAttendanceForStudent = asyncHandler(async (req, res) => {
             {
                 $lookup: {
                     from: 'classes',
-                    localField: '$sessionInfo.classId',
+                    localField: 'sessionInfo.classId',
                     foreignField: '_id',
                     as: 'classInfo'
                 }

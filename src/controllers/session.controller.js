@@ -14,8 +14,8 @@ const createSession = asyncHandler(async (req, res) => {
     //return res
     
 try {
-        const {classId} = req.params
-    
+        const {classId} = req.body 
+
         const classes = await Class.findById(classId)
         if(!classes) throw new ApiError(401, "Class not found");
     
@@ -47,7 +47,7 @@ try {
             "Session created successfully."
         ))
     } catch (error) {
-        console.error("Failed to get error: ", error);
+        console.error("Failed to create session: ", error);
     }
 })
 
