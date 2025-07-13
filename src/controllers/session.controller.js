@@ -21,8 +21,17 @@ try {
     
         const sessionDate = new Date()
         const expiresAt = new Date(sessionDate.getTime() + 15 * 60 * 1000)
+
+        const session = await Session.create({
+            classId,
+            date: sessionDate,
+            qrCode: "", 
+            expiresAt: expiresAt,
+        })
     
+
         const qrData = {
+            sessionId: session._id,
             classId: classId.toString(),
             generateAt: sessionDate.toISOString(),
             expiresAt: expiresAt.toISOString 
@@ -30,15 +39,10 @@ try {
     
         const qrCodeImg = await QrCode.toDataURL(JSON.stringify(qrData))
         console.log("Qrcode: ", qrCodeImg);
-        
-    
-        const session = await Session.create({
-            classId,
-            date: sessionDate,
-            qrCode: qrCodeImg, 
-            expiresAt: expiresAt,
-        })
-    
+
+        session.qrCode = qrCodeImg
+        await session.save()
+
         return res
         .status(201)
         .json(new ApiResponse(
