@@ -108,55 +108,48 @@ const getAttendanceForSession = asyncHandler(async (req, res) => {
 
 const getAttendanceForStudent = asyncHandler(async (req, res) => {
     try {
-        const studentId = req.user._id
-    
-        const attendanceRecords = await Attendance.aggregate([
-            {
-                $match: {
-                    studentId: new mongoose.Types.ObjectId(studentId)
-                }
-            },
-            {
-                $lookup: {
-                    from: 'sessions',
-                    localField: 'sessionId',
-                    foreignField: '_id',
-                    as: 'sessionInfo'
-                }
-            },
-            { $unwind: '$sessionInfo' },
-            {
-                $lookup: {
-                    from: 'classes',
-                    localField: 'sessionInfo.classId',
-                    foreignField: '_id',
-                    as: 'classInfo'
-                }
-            },
-            { $unwind: '$classInfo' },
-            {
-                $project: {
-                    _id: 1,
-                    sessionDate: '$sessionInfo.date',
-                    className: '$classInfo.name',
-                    subject: '$classInfo.subject'
-                }
-            }
-        ])
-    
-        if(!attendanceRecords) throw new ApiError(401, "Failed to get attendance");
-    
-        return res
-        .status(200)
-        .json(new ApiResponse(
-            200,
-            attendanceRecords,
-            "Attendance fetched successfully."
-        ))
+        const studentId = req.user._id;
+
+        // Step 1: Get classes in which the student is enrolled
+        const classes = await Class.find({ students: studentId }).select('_id name subject');
+
+        const classIds = classes.map(cls => cls._id);
+
+        // Step 2: Get all sessions for those classes
+        const sessions = await Session.find({ classId: { $in: classIds } })
+            .populate('classId', 'name subject')
+            .sort({ date: -1 });
+
+        // Step 3: For each session, check if attendance is marked for the student
+        const attendanceRecords = await Promise.all(
+            sessions.map(async (session) => {
+                const marked = await Attendance.findOne({
+                    sessionId: session._id,
+                    studentId,
+                });
+
+                return {
+                    _id: session._id,
+                    sessionDate: session.date,
+                    className: session.classId.name,
+                    subject: session.classId.subject,
+                    status: marked ? 'Present' : 'Absent', // ✅ Add status
+                };
+            })
+        );
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                attendanceRecords,
+                'Attendance fetched successfully.'
+            )
+        );
     } catch (error) {
-        console.error("Failed to get attendance: ", error);
+        console.error('Failed to get attendance: ', error);
+        return res.status(500).json(new ApiResponse(500, null, 'Internal server error'));
     }
-})
+});
 
 export {
     MarkAttendance,
