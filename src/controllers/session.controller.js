@@ -83,8 +83,73 @@ const getSessionById = asyncHandler(async (req, res) => {
     ))
 })
 
+const getSessionForStudent = asyncHandler(async (req, res) => {
+    const studentId = req.user._id
+
+    const classes = await Class.find({students: studentId}).select("_id")
+    const classIds = classes.map(cls => cls._id)
+
+    const now = new Date()
+
+    const upcomingSessions = await Session.find({
+        classId: {$in: classIds},
+        date: {$gte: now}
+    }).populate("classId", "name subject").sort({date: 1})
+
+    const pastSessions = await Session.find({
+        classId: {$in: classIds},
+        date: {$lt: now}
+    }).populate("classId", "name subject").sort({date: 1})
+
+    return res
+    .status(201)
+    .json(new ApiResponse(
+        201,
+        {
+            upcoming: upcomingSessions,
+            past: pastSessions
+        },
+        "Past and upcoming sessions for students are fetched successfully."
+    ))
+})
+
+const getSessionForTeacher = asyncHandler(async (req, res) => {
+    const teacherId = req.user._id
+    console.log("Teacherid: ", teacherId);
+    
+
+    const classes = await Class.find({createdBy: teacherId}).select("_id name subject")
+    const classIds = classes.map(cls => cls._id)
+    console.log("Classes for teacher:", classes);
+
+    const now = new Date()
+
+    const upcomingSessions = await Session.find({
+        classId: {$in: classIds},
+        date: {$gte: now}
+    }).populate("classId", "name subject").sort({date: 1})
+
+    const pastSessions = await Session.find({
+        classId: {$in: classIds},
+        date: {$lt: now}
+    }).populate("classId", "name subject").sort({date: 1})
+
+    return res
+    .status(201)
+    .json(new ApiResponse(
+        201,
+        {
+            upcoming: upcomingSessions,
+            past: pastSessions
+        },
+        "Past and upcoming sessions for teachers are fetched successfully."
+    ))
+})
+
 export {
     createSession,
     getSessionForClass,
-    getSessionById
+    getSessionById,
+    getSessionForStudent,
+    getSessionForTeacher
 }

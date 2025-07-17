@@ -6,7 +6,7 @@ import { addStudentToClass, createClass, getAllClassesForStudents, getAllClasses
 const router = Router()
 
 router.route("/create-class").post(verifyJWT, authorizeRoles("Teacher"), createClass)
-router.route("/get-classForTeacher/:teacherId").get(verifyJWT, authorizeRoles("Teacher"), getAllClassesForTeacher)
+router.route("/get-classForTeacher").get(verifyJWT, authorizeRoles("Teacher"), getAllClassesForTeacher)
 router.route("/get-class-details/:classId").get(verifyJWT, getClassDetails)
 router.route("/add-student/:classId").post(verifyJWT, authorizeRoles("Teacher"), addStudentToClass)
 router.route("/get-classForStudent").get(verifyJWT, authorizeRoles("Student"), getAllClassesForStudents)
