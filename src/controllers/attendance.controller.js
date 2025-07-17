@@ -151,8 +151,54 @@ const getAttendanceForStudent = asyncHandler(async (req, res) => {
     }
 });
 
+const getAttendanceAnalyticsForTeacher = asyncHandler(async (req, res) => {
+    try {
+        const teacherId = req.user._id
+
+        const classes = await Class.find({createdBy: teacherId}).select('_id name subject students');
+        const classIds = classes.map(cls => cls._id)
+
+        const analytics = await Promise.all(
+            classes.map(async (cls) => {
+                const sessions = await Session.find({classId: cls._id})
+
+                const totalSessions = sessions.length
+                const totalStudents = cls.students.length
+
+                const attendanceCount = await Attendance.countDocuments({
+                    sessionId: {$in: sessions.map(s => s._id)}
+                })
+
+                const totalPossible = totalSessions * totalStudents
+                const percentage = totalPossible > 0 ? ((attendanceCount/totalPossible) * 100).toFixed(2) : 0
+
+                return {
+                    classsId: cls._id,
+                    className: cls.name,
+                    subject: cls.subject,
+                    totalSessions,
+                    totalStudents,
+                    totalAttendanceMarked: attendanceCount,
+                    attendancePercentage: percentage
+                }
+            })
+        )
+
+        return res
+        .status(201)
+        .json(new ApiResponse(
+            201,
+            analytics,
+            "Attendance analytics fetched successfully."
+        ))
+    } catch (error) {
+        console.error("Failed to get the data: ", error);   
+    }
+})
+
 export {
     MarkAttendance,
     getAttendanceForSession,
-    getAttendanceForStudent
+    getAttendanceForStudent,
+    getAttendanceAnalyticsForTeacher
 }
