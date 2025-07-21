@@ -117,7 +117,7 @@ const getSessionForTeacher = asyncHandler(async (req, res) => {
     const teacherId = req.user._id
     console.log("Teacherid: ", teacherId);
     
-
+    
     const classes = await Class.find({createdBy: teacherId}).select("_id name subject")
     const classIds = classes.map(cls => cls._id)
     console.log("Classes for teacher:", classes);
